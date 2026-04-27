@@ -3,7 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'screens/auth/splash_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/signup_screen.dart';
-// import 'screens/home/home_screen.dart'; // add when built
+import 'screens/home/home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,18 +21,17 @@ class TropicaGuideApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         scaffoldBackgroundColor: const Color(0xFF0D1F18),
-        colorScheme: ColorScheme.dark(
-          primary: const Color(0xFF1D9E75),
-          surface: const Color(0xFF0D1F18),
+        colorScheme: const ColorScheme.dark(
+          primary: Color(0xFF1D9E75),
+          surface: Color(0xFF0D1F18),
         ),
-        fontFamily: 'DMSans', // add to pubspec if needed
       ),
       initialRoute: '/',
       routes: {
-        '/':       (ctx) => const SplashScreen(),
-        '/login':  (ctx) => const LoginScreen(),
-        '/signup': (ctx) => const SignUpScreen(),
-        // '/home': (ctx) => const HomeScreen(),
+        '/':        (ctx) => const SplashScreen(),
+        '/login':   (ctx) => const LoginScreen(),
+        '/signup':  (ctx) => const SignUpScreen(),
+        '/home':    (ctx) => const HomeScreen(),
       },
     );
   }
