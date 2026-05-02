@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "986819287695",
+    "project_id": "bawoh1-test1",
+    "storage_bucket": "bawoh1-test1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:986819287695:android:b80d4913474c6aec752efa",
+        "android_client_info": {
+          "package_name": "com.example.my_product_app1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyACXJmFnlvtSHqlMo_zPBGOw8qMU5rVjyM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:986819287695:android:ff06927ebddb7b7f752efa",
+        "android_client_info": {
+          "package_name": "com.example.tropicaguide_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyACXJmFnlvtSHqlMo_zPBGOw8qMU5rVjyM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
