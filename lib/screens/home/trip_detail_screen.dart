@@ -71,6 +71,91 @@ class _TripDetailScreenState extends State<TripDetailScreen>
         .delete();
   }
 
+  Future<void> _deleteTrip() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFF0F2820),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Delete trip?',
+            style: TextStyle(color: Color(0xFFE8F5EF))),
+        content: const Text(
+            'This will permanently delete the trip and all its activities.',
+            style: TextStyle(color: Color(0xFF4D7A6A))),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel',
+                  style: TextStyle(color: Color(0xFF5A8A76)))),
+          TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Delete',
+                  style: TextStyle(color: Color(0xFFE24B4A)))),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+
+    // Delete all activities in subcollection first
+    final activities = await FirebaseFirestore.instance
+        .collection('trips')
+        .doc(widget.trip.id)
+        .collection('activities')
+        .get();
+    for (final doc in activities.docs) {
+      await doc.reference.delete();
+    }
+
+    // Delete the trip document itself
+    await FirebaseFirestore.instance
+        .collection('trips')
+        .doc(widget.trip.id)
+        .delete();
+
+    if (mounted) Navigator.pop(context);
+  }
+
+  void _showMoreMenu(BuildContext buttonContext) async {
+    final RenderBox button =
+        buttonContext.findRenderObject() as RenderBox;
+    final RenderBox overlay =
+        Overlay.of(buttonContext).context.findRenderObject() as RenderBox;
+    final RelativeRect position = RelativeRect.fromRect(
+      Rect.fromPoints(
+        button.localToGlobal(Offset.zero, ancestor: overlay),
+        button.localToGlobal(
+            button.size.bottomRight(Offset.zero),
+            ancestor: overlay),
+      ),
+      Offset.zero & overlay.size,
+    );
+
+    final result = await showMenu<String>(
+      context: buttonContext,
+      position: position,
+      color: const Color(0xFF0F2820),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: Color(0xFF1E3D2E)),
+      ),
+      items: [
+        PopupMenuItem(
+          value: 'delete',
+          child: Row(children: const [
+            Icon(Icons.delete_outline_rounded,
+                color: Color(0xFFE24B4A), size: 16),
+            SizedBox(width: 8),
+            Text('Delete trip',
+                style: TextStyle(
+                    color: Color(0xFFE24B4A), fontSize: 13)),
+          ]),
+        ),
+      ],
+    );
+
+    if (result == 'delete') _deleteTrip();
+  }
+
   @override
   Widget build(BuildContext context) {
     final fmt = DateFormat('MMM d');
@@ -109,7 +194,23 @@ class _TripDetailScreenState extends State<TripDetailScreen>
                       );
                     }),
                     const SizedBox(width: 8),
-                    _iconBtn(Icons.more_horiz_rounded, onTap: () {}),
+                    // More menu button with dropdown
+                    Builder(
+                      builder: (buttonContext) => GestureDetector(
+                        onTap: () => _showMoreMenu(buttonContext),
+                        child: Container(
+                          width: 34,
+                          height: 34,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0F2820),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: const Color(0xFF1E3D2E)),
+                          ),
+                          child: const Icon(Icons.more_horiz_rounded,
+                              color: Color(0xFF5A8A76), size: 18),
+                        ),
+                      ),
+                    ),
                   ]),
                   const SizedBox(height: 12),
                   Text(widget.trip.destination,
