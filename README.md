@@ -11,7 +11,7 @@ TropicaGuide is a Flutter + Firebase mobile app that lets two people plan a trip
 | Name | Role |
 |------|------|
 | Samia Haynes | Person B — UI & Features |
-| [Partner Name] | Person A — Backend & Firebase |
+| Bryant Awoh | Person A — Backend & Firebase |
 
 ---
 
