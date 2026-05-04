@@ -14,6 +14,15 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final _uid = FirebaseAuth.instance.currentUser!.uid;
+  bool _searchActive = false;
+  String _searchQuery = '';
+  final _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   String get _firstName {
     final name = FirebaseAuth.instance.currentUser?.displayName ?? '';
@@ -27,6 +36,16 @@ class _HomeScreenState extends State<HomeScreen> {
         .orderBy('startDate')
         .snapshots()
         .map((snap) => snap.docs.map((d) => Trip.fromDoc(d)).toList());
+  }
+
+  List<Trip> _filterTrips(List<Trip> trips) {
+    if (_searchQuery.isEmpty) return trips;
+    final q = _searchQuery.toLowerCase();
+    return trips.where((t) {
+      return t.name.toLowerCase().contains(q) ||
+          t.destination.toLowerCase().contains(q) ||
+          t.tripType.toLowerCase().contains(q);
+    }).toList();
   }
 
   void _openCreateTrip() {
@@ -48,26 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
             // Top bar
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 4),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('My Trips',
-                            style: TextStyle(
-                                fontSize: 26,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFFE8F5EF))),
-                        Text('Hey, $_firstName 👋  Where to next?',
-                            style: const TextStyle(
-                                fontSize: 13, color: Color(0xFF4D7A6A))),
-                      ],
-                    ),
-                  ),
-                  _iconBtn(Icons.search_rounded, onTap: () {}),
-                ],
-              ),
+              child: _searchActive ? _searchBar() : _topBar(),
             ),
 
             // Trip list
@@ -80,8 +80,14 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: CircularProgressIndicator(
                             color: Color(0xFF1D9E75), strokeWidth: 2));
                   }
-                  final trips = snap.data ?? [];
-                  if (trips.isEmpty) return _emptyState();
+                  final allTrips = snap.data ?? [];
+                  final trips = _filterTrips(allTrips);
+
+                  if (allTrips.isEmpty) return _emptyState();
+
+                  if (trips.isEmpty && _searchQuery.isNotEmpty) {
+                    return _noResultsState();
+                  }
 
                   final now = DateTime.now();
                   final upcoming =
@@ -121,6 +127,110 @@ class _HomeScreenState extends State<HomeScreen> {
       bottomNavigationBar: _bottomNav(),
     );
   }
+
+  // ── Top bar & Search ───────────────────────────────────────────────────
+
+  Widget _topBar() {
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('My Trips',
+                  style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFFE8F5EF))),
+              Text('Hey, $_firstName 👋  Where to next?',
+                  style: const TextStyle(
+                      fontSize: 13, color: Color(0xFF4D7A6A))),
+            ],
+          ),
+        ),
+        _iconBtn(Icons.search_rounded, onTap: () {
+          setState(() => _searchActive = true);
+        }),
+      ],
+    );
+  }
+
+  Widget _searchBar() {
+    return Row(
+      children: [
+        Expanded(
+          child: Container(
+            height: 40,
+            decoration: BoxDecoration(
+              color: const Color(0xFF0F2820),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFF1D9E75)),
+            ),
+            child: TextField(
+              controller: _searchController,
+              autofocus: true,
+              style: const TextStyle(fontSize: 14, color: Color(0xFFE8F5EF)),
+              decoration: const InputDecoration(
+                hintText: 'Search trips...',
+                hintStyle: TextStyle(color: Color(0xFF3A5A4A), fontSize: 13),
+                prefixIcon: Icon(Icons.search_rounded,
+                    color: Color(0xFF3A6A55), size: 18),
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(vertical: 10),
+              ),
+              onChanged: (val) => setState(() => _searchQuery = val),
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        GestureDetector(
+          onTap: () {
+            setState(() {
+              _searchActive = false;
+              _searchQuery = '';
+              _searchController.clear();
+            });
+          },
+          child: const Text('Cancel',
+              style: TextStyle(fontSize: 13, color: Color(0xFF1D9E75))),
+        ),
+      ],
+    );
+  }
+
+  Widget _noResultsState() => Center(
+    child: Padding(
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 64, height: 64,
+            decoration: BoxDecoration(
+              color: const Color(0xFF0F2820),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: const Color(0xFF1E3D2E)),
+            ),
+            child: const Icon(Icons.search_off_rounded,
+                color: Color(0xFF3A6A55), size: 28),
+          ),
+          const SizedBox(height: 16),
+          const Text('No trips found',
+              style: TextStyle(
+                  fontSize: 16,
+                  color: Color(0xFF9AC8B4),
+                  fontWeight: FontWeight.w500)),
+          const SizedBox(height: 6),
+          const Text('Try searching by destination, name, or trip type.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF3A5A4A),
+                  height: 1.5)),
+        ],
+      ),
+    ),
+  );
 
   // ── Widgets ────────────────────────────────────────────────────────────
 
@@ -321,7 +431,7 @@ class _HomeScreenState extends State<HomeScreen> {
   );
 
   Widget _navItem(IconData icon, String label, int index) {
-    final active = index == 0; // Home is always active on this screen
+    final active = index == 0;
     return GestureDetector(
       onTap: () {
         if (index == 1) Navigator.pushNamed(context, '/profile');
